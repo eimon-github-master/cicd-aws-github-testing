@@ -20,7 +20,7 @@ jobs:
       - name: Build Docker image ( hc-ci-cd:latest ) #Image Name that you created in docker
         run: |
           docker build -t ci-cd:latest .
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker image tag ci-cd:latest eimonwinaung/ci-cd:latest
           docker push eimonwinaung/ci-cd:latest
 
