@@ -1,0 +1,41 @@
+name: Basic CI/CD ( Pipeline )
+
+#env:
+#  DOCKER_USERNAME: ieielil #DockerUsername
+#  DOCKER_PASSWORD: '' #DockerPassword
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image ( hc-ci-cd:latest ) #Image Name that you created in docker
+        run: |
+          docker build -t ci-cd:latest .
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker image tag ci-cd:latest eimonwinaung/ci-cd:latest
+          docker push eimonwinaung/ci-cd:latest
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} #Replace with your access key id
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} #Replace with your access key
+          aws configure set default.region ap-southeast-1 # Set your AWS region
+        env:
+         AWS_DEFAULT_REGION: ap-southeast-1
+        
+      - name: Authenticate with EKS ( Authentication to eks cluster )
+        run: aws eks update-kubeconfig --name eks-test
+
+      - name: Deploy to EKS ( Deploying simple python app )
+        run: | 
+          kubectl apply -f k8s/deployment.yaml
+          kubectl rollout restart deploy/ci-cd-hc-app
